@@ -1,0 +1,5 @@
+{
+  "name": "Bajaj Tax Invoice",
+  "description": "A comprehensive real-time invoice and EMI management system for Bajaj employees, partners, and associates. Features include creating, editing, deleting, and printing invoices, as well as managing EMI schedules with payment tracking.",
+  "requestFramePermissions": []
+}
