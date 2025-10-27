@@ -3,7 +3,7 @@ import { Invoice, Product, PaymentStatus } from '../types';
 import { useInvoices } from '../contexts/InvoiceContext';
 import { useProducts } from '../contexts/ProductContext';
 import { useToast } from '../contexts/ToastContext';
-import { CloseIcon, PlusIcon, TrashIcon } from './icons';
+import { CloseIcon, PlusIcon, TrashIcon, CameraIcon } from './icons';
 
 interface InvoiceFormProps {
     invoice: Invoice | null;
@@ -19,6 +19,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose }) => {
         billNo: '',
         customerName: '',
         address: '',
+        customerPhoto: '',
         dateOfPurchase: new Date().toISOString().split('T')[0],
         items: [],
         downPayment: 0,
@@ -35,6 +36,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose }) => {
                 billNo: invoice.billNo,
                 customerName: invoice.customerName,
                 address: invoice.address,
+                customerPhoto: invoice.customerPhoto || '',
                 dateOfPurchase: invoice.dateOfPurchase,
                 items: invoice.items,
                 downPayment: invoice.downPayment,
@@ -78,6 +80,28 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose }) => {
                 ? (e.target as HTMLInputElement).checked
                 : (name === 'downPayment' ? parseFloat(value) || 0 : value)
         }));
+    };
+
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                showToast('File size should not exceed 2MB.', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, customerPhoto: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removePhoto = () => {
+        setFormData(prev => ({ ...prev, customerPhoto: '' }));
+        // Also reset the file input
+        const fileInput = document.getElementById('customerPhoto') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
     };
 
     const handleItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,37 +194,67 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose }) => {
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} placeholder="Customer Name" required className="input-field md:col-span-2" />
-                        <input type="text" name="billNo" value={formData.billNo} placeholder="Bill No." required readOnly className="input-field bg-white/5" />
-                        <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Address" required className="input-field md:col-span-3" rows={2}></textarea>
-                        <input type="date" name="dateOfPurchase" value={formData.dateOfPurchase} onChange={handleInputChange} required className="input-field" />
-                        <div>
-                             <label htmlFor="paymentStatus" className="block text-sm font-medium text-gray-300 mb-1">Status</label>
-                             <select
-                                name="paymentStatus"
-                                id="paymentStatus"
-                                value={formData.paymentStatus}
-                                onChange={handleInputChange}
-                                className="input-field w-full"
-                             >
-                                {Object.values(PaymentStatus).map(status => (
-                                    <option key={status} value={status}>{status}</option>
-                                ))}
-                             </select>
-                        </div>
-                        <div className="flex items-center gap-3 bg-white/10 p-2.5 rounded-md justify-center">
-                             <input
-                                type="checkbox"
-                                name="emiEnabled"
-                                id="emiEnabled"
-                                checked={formData.emiEnabled}
-                                onChange={handleInputChange}
-                                className="h-5 w-5 rounded border-gray-400 bg-white/20 text-brand-accent focus:ring-brand-accent focus:ring-2 cursor-pointer"
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="md:col-span-1 flex flex-col items-center justify-center space-y-2">
+                            <input
+                                type="file"
+                                id="customerPhoto"
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                                onChange={handlePhotoUpload}
                             />
-                            <label htmlFor="emiEnabled" className="font-medium text-gray-200 cursor-pointer select-none">
-                                Offer EMI Option
+                            <label htmlFor="customerPhoto" className="cursor-pointer">
+                                {formData.customerPhoto ? (
+                                    <img src={formData.customerPhoto} alt="Customer" className="w-28 h-28 rounded-full object-cover border-2 border-brand-accent shadow-lg" />
+                                ) : (
+                                    <div className="w-28 h-28 rounded-full bg-white/10 border-2 border-dashed border-white/30 flex flex-col items-center justify-center text-gray-400 hover:bg-white/20 hover:border-brand-accent transition-colors">
+                                        <CameraIcon />
+                                        <span className="text-xs mt-1">Upload Photo</span>
+                                    </div>
+                                )}
                             </label>
+                            {formData.customerPhoto && (
+                                <button type="button" onClick={removePhoto} className="text-xs text-red-400 hover:text-red-300">
+                                    Remove Photo
+                                </button>
+                            )}
+                        </div>
+                        <div className="md:col-span-3 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} placeholder="Customer Name" required className="input-field" />
+                                <input type="text" name="billNo" value={formData.billNo} placeholder="Bill No." required readOnly className="input-field bg-white/5" />
+                            </div>
+                            <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Address" required className="input-field w-full" rows={2}></textarea>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <input type="date" name="dateOfPurchase" value={formData.dateOfPurchase} onChange={handleInputChange} required className="input-field" />
+                                <div>
+                                     <label htmlFor="paymentStatus" className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                                     <select
+                                        name="paymentStatus"
+                                        id="paymentStatus"
+                                        value={formData.paymentStatus}
+                                        onChange={handleInputChange}
+                                        className="input-field w-full"
+                                     >
+                                        {Object.values(PaymentStatus).map(status => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                     </select>
+                                </div>
+                                <div className="flex items-center gap-3 bg-white/10 p-2.5 rounded-md justify-center h-full">
+                                     <input
+                                        type="checkbox"
+                                        name="emiEnabled"
+                                        id="emiEnabled"
+                                        checked={formData.emiEnabled}
+                                        onChange={handleInputChange}
+                                        className="h-5 w-5 rounded border-gray-400 bg-white/20 text-brand-accent focus:ring-brand-accent focus:ring-2 cursor-pointer"
+                                    />
+                                    <label htmlFor="emiEnabled" className="font-medium text-gray-200 cursor-pointer select-none">
+                                        Offer EMI Option
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

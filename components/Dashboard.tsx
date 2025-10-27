@@ -221,10 +221,15 @@ const Dashboard: React.FC = () => {
                                 <p><strong>Date:</strong> {new Date(invoice.dateOfPurchase).toLocaleDateString()}</p>
                             </div>
                          </div>
-                        <div className="mb-8 p-4 border border-gray-200 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2">Billed To:</h2>
-                            <p className="font-bold">{invoice.customerName}</p>
-                            <p>{invoice.address}</p>
+                        <div className="flex items-start gap-4 mb-8 p-4 border border-gray-200 rounded-lg">
+                            {invoice.customerPhoto && (
+                                <img src={invoice.customerPhoto} alt="Customer" className="w-24 h-24 rounded-lg object-cover" />
+                            )}
+                            <div>
+                                <h2 className="text-lg font-semibold mb-2">Billed To:</h2>
+                                <p className="font-bold">{invoice.customerName}</p>
+                                <p>{invoice.address}</p>
+                            </div>
                         </div>
                         <table className="w-full text-left mb-8">
                             <thead className="bg-gray-100">

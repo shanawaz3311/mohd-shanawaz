@@ -43,6 +43,7 @@ export interface Invoice {
     billNo: string;
     customerName: string;
     address: string;
+    customerPhoto?: string;
     dateOfPurchase: string;
     items: Product[];
     downPayment: number;
